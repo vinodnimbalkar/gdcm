@@ -1,0 +1,19 @@
+[package]
+name = "gdcm"
+version = "0.1.0"
+edition = "2021"
+authors = ["vinodnimbalkar <omvinod@yahoo.com>"]
+description = "Git Diff to Commit Message API - AI-powered commit message generator using Google Gemini"
+repository = "https://github.com/vinodnimbalkar/gdcm"
+license = "MIT"
+keywords = ["git", "commit", "ai", "gemini", "cloudflare"]
+categories = ["command-line-utilities", "development-tools"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+worker = { version = "0.6" }
+worker-macros = { version = "0.6" }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"

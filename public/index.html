@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GCM - Git Commit Message Generator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .form-container {
+            padding: 40px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #2c3e50;
+            font-size: 1.1rem;
+        }
+
+        textarea, input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e0e6ed;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            transition: border-color 0.3s ease;
+            background: #f8f9fa;
+        }
+
+        textarea:focus, input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        #diffInput {
+            height: 200px;
+            resize: vertical;
+        }
+
+        .button {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            width: 100%;
+        }
+
+        .button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+        }
+
+        .button:active {
+            transform: translateY(0);
+        }
+
+        .button:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .result {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .result.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .result.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .result h3 {
+            margin-bottom: 10px;
+            font-size: 1.2rem;
+        }
+
+        .commit-message {
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            margin-top: 10px;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #667eea;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .example {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+        }
+
+        .example h4 {
+            margin-bottom: 10px;
+            color: #495057;
+        }
+
+        .example code {
+            background: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+
+        .copy-btn {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+            transition: background 0.2s ease;
+        }
+
+        .copy-btn:hover {
+            background: #218838;
+        }
+
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 2rem;
+            }
+
+            .form-container {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🚀 GCM</h1>
+            <p>AI-Powered Git Commit Message Generator</p>
+        </div>
+
+        <div class="form-container">
+            <form id="commitForm">
+                <div class="form-group">
+                    <label for="apiKey">Gemini API Key (optional)</label>
+                    <input type="text" id="apiKey" placeholder="Enter your Gemini API key or leave empty if set in environment">
+                </div>
+
+                <div class="form-group">
+                    <label for="diffInput">Git Diff</label>
+                    <textarea id="diffInput" placeholder="Paste your git diff here..." required></textarea>
+                </div>
+
+                <button type="submit" class="button" id="generateBtn">
+                    Generate Commit Message
+                </button>
+            </form>
+
+            <div class="loading" id="loading">
+                <div class="spinner"></div>
+                <p>Generating commit message...</p>
+            </div>
+
+            <div class="result" id="result"></div>
+
+            <div class="example">
+                <h4>Example Usage:</h4>
+                <p>1. Run <code>git diff</code> or <code>git diff --staged</code> in your terminal</p>
+                <p>2. Copy the output and paste it in the text area above</p>
+                <p>3. Click "Generate Commit Message" to get an AI-generated commit message</p>
+                <p>4. Copy the generated message and use it with <code>git commit -m "message"</code></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('commitForm');
+        const apiKeyInput = document.getElementById('apiKey');
+        const diffInput = document.getElementById('diffInput');
+        const generateBtn = document.getElementById('generateBtn');
+        const loading = document.getElementById('loading');
+        const result = document.getElementById('result');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const apiKey = apiKeyInput.value.trim();
+            const diff = diffInput.value.trim();
+
+            if (!diff) {
+                showError('Please enter a git diff');
+                return;
+            }
+
+            generateBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                const requestBody = {
+                    diff: diff
+                };
+
+                if (apiKey) {
+                    requestBody.gemini_api_key = apiKey;
+                }
+
+                const response = await fetch('/generate-commit', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestBody)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    showSuccess(data.commit_message, data.service_used);
+                } else {
+                    showError(data.error || 'Failed to generate commit message');
+                }
+            } catch (error) {
+                showError('Network error: ' + error.message);
+            } finally {
+                generateBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+
+        function showSuccess(commitMessage, serviceUsed) {
+            result.className = 'result success';
+            result.innerHTML = `
+                <h3>✅ Commit Message Generated (using ${serviceUsed})</h3>
+                <div class="commit-message">${escapeHtml(commitMessage)}</div>
+                <button class="copy-btn" onclick="copyToClipboard('${escapeForJs(commitMessage)}')">
+                    Copy to Clipboard
+                </button>
+            `;
+            result.style.display = 'block';
+        }
+
+        function showError(message) {
+            result.className = 'result error';
+            result.innerHTML = `
+                <h3>❌ Error</h3>
+                <p>${escapeHtml(message)}</p>
+            `;
+            result.style.display = 'block';
+        }
+
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.style.background = '#20c997';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = '#28a745';
+                }, 2000);
+            }).catch(() => {
+                alert('Failed to copy to clipboard');
+            });
+        }
+
+        function escapeHtml(unsafe) {
+            return unsafe
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        function escapeForJs(str) {
+            return str.replace(/'/g, "\\'").replace(/"/g, '\\"').replace(/\n/g, '\\n');
+        }
+
+        // Load saved API key from localStorage
+        const savedApiKey = localStorage.getItem('gemini_api_key');
+        if (savedApiKey) {
+            apiKeyInput.value = savedApiKey;
+        }
+
+        // Save API key to localStorage when changed
+        apiKeyInput.addEventListener('change', () => {
+            const apiKey = apiKeyInput.value.trim();
+            if (apiKey) {
+                localStorage.setItem('gemini_api_key', apiKey);
+            } else {
+                localStorage.removeItem('gemini_api_key');
+            }
+        });
+
+        // Sample diff for testing
+        const sampleDiff = `diff --git a/src/main.rs b/src/main.rs
+index 1234567..abcdefg 100644
+--- a/src/main.rs
++++ b/src/main.rs
+@@ -1,3 +1,6 @@
+ fn main() {
++    println!("Hello, World!");
++    let x = 42;
++    println!("The answer is: {}", x);
+     // existing code
+ }`;
+
+        // Add sample diff button for testing
+        const sampleBtn = document.createElement('button');
+        sampleBtn.type = 'button';
+        sampleBtn.className = 'copy-btn';
+        sampleBtn.textContent = 'Load Sample Diff';
+        sampleBtn.style.marginBottom = '10px';
+        sampleBtn.onclick = () => {
+            diffInput.value = sampleDiff;
+        };
+        diffInput.parentNode.insertBefore(sampleBtn, diffInput);
+    </script>
+</body>
+</html>
