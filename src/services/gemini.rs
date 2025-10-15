@@ -62,8 +62,16 @@ impl GeminiService {
         let commit_message = gemini_response
             .candidates
             .first()
-            .and_then(|c| c.content.parts.first())
-            .map(|p| p.text.trim().to_string())
+            .map(|c| {
+                c.content
+                    .parts
+                    .iter()
+                    .map(|p| p.text.as_str())
+                    .collect::<Vec<_>>()
+                    .join("")
+                    .trim()
+                    .to_string()
+            })
             .ok_or_else(|| "No commit message generated".to_string())?;
 
         Ok(commit_message)
