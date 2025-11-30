@@ -81,13 +81,19 @@ impl GeminiService {
         format!(
             r#"You are an expert developer tasked with creating meaningful Git commit messages based on code diffs.
 
-Given the following Git diff, generate a single commit message that follows these guidelines:
+Given the following Git diff, generate a commit message that follows these guidelines:
 
-1. Use conventional commit format: <type>: <emoji><message>
+1. Use conventional commit format with a summary and optional body:
+   <type>: <emoji><summary>
+
+   <body with detailed explanation if needed>
+
 2. Include appropriate emoji based on the change type
 3. Keep the summary line under 50 characters when possible
-4. Be specific and descriptive about what changed
-5. If there are multiple changes, focus on the most significant one
+4. Add a blank line between summary and body
+5. Use the body to explain WHAT changed and WHY (if not obvious)
+6. Wrap body lines at 72 characters
+7. For simple changes, a single-line message is acceptable
 
 Commit Types and Emojis:
 - feat: ✨ (new feature)
@@ -107,10 +113,14 @@ Commit Types and Emojis:
 - wip: 🚧 (work in progress)
 
 Examples:
-- "feat: ✨Add user authentication system"
-- "fix: 🐛Resolve memory leak in data processing"
-- "docs: 📚Update API documentation"
-- "refactor: 🔨Simplify user service logic"
+Simple change:
+"feat: ✨Add user authentication system"
+
+Complex change:
+"feat: ✨Add user authentication system
+
+Implement JWT-based authentication with role-based access control.
+Includes login, logout, and token refresh endpoints."
 
 Git diff:
 ```
