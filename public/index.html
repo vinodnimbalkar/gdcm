@@ -477,7 +477,7 @@
                     Generated Successfully
                 </h3>
                 <div class="commit-message">${escapeHtml(commitMessage)}</div>
-                <button class="copy-btn" onclick="copyToClipboard('${escapeForJs(commitMessage)}')">
+                <button class="copy-btn" data-commit-message="${escapeHtml(commitMessage)}" onclick="copyToClipboard(event)">
                     Copy to Clipboard
                 </button>
                 <p style="margin-top: 10px; font-size: 0.75rem; opacity: 0.8;">Generated using ${serviceUsed}</p>
@@ -497,11 +497,13 @@
                 result.style.display = "block";
             }
 
-            function copyToClipboard(text) {
+            function copyToClipboard(event) {
+                const btn = event.target;
+                const text = btn.getAttribute("data-commit-message");
+
                 navigator.clipboard
                     .writeText(text)
                     .then(() => {
-                        const btn = event.target;
                         const originalText = btn.textContent;
                         btn.textContent = "Copied!";
                         // btn.style.background = 'rgba(0,0,0,0.1)';
