@@ -20,6 +20,8 @@ pub struct ErrorResponse {
 
 #[derive(Serialize)]
 pub struct GeminiRequest {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub system_instruction: Option<GeminiContent>,
     pub contents: Vec<GeminiContent>,
 }
 

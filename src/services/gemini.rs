@@ -8,7 +8,10 @@ impl GeminiService {
         diff: &str,
         api_key: &str,
     ) -> std::result::Result<String, String> {
-        let prompt = Self::create_commit_prompt(diff);
+        let prompt = format!(
+            "Generate a commit message for this Git diff:\n\n```\n{}\n```",
+            diff
+        );
 
         let url = format!(
             "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={}",
@@ -16,6 +19,11 @@ impl GeminiService {
         );
 
         let request_body = GeminiRequest {
+            system_instruction: Some(GeminiContent {
+                parts: vec![GeminiPart {
+                    text: Self::get_system_instruction().to_string(),
+                }],
+            }),
             contents: vec![GeminiContent {
                 parts: vec![GeminiPart { text: prompt }],
             }],
@@ -77,11 +85,10 @@ impl GeminiService {
         Ok(commit_message)
     }
 
-    fn create_commit_prompt(diff: &str) -> String {
-        format!(
-            r#"You are an expert developer tasked with creating meaningful Git commit messages based on code diffs.
+    fn get_system_instruction() -> &'static str {
+        r#"You are an expert developer tasked with creating meaningful Git commit messages based on code diffs.
 
-Given the following Git diff, generate a commit message that follows these guidelines:
+Generate commit messages that follow these guidelines:
 
 1. Use conventional commit format with a summary and optional body:
    <type>: <emoji><summary>
@@ -122,14 +129,7 @@ Complex change:
 Implement JWT-based authentication with role-based access control.
 Includes login, logout, and token refresh endpoints."
 
-Git diff:
-```
-{}
-```
-
-Generate only the commit message, nothing else:"#,
-            diff
-        )
+Generate only the commit message, nothing else."#
     }
 }
 
@@ -138,11 +138,10 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_create_commit_prompt() {
-        let diff = "diff --git a/src/main.rs b/src/main.rs\nindex 1234567..abcdefg 100644\n--- a/src/main.rs\n+++ b/src/main.rs\n@@ -1,3 +1,4 @@\n fn main() {\n+    println!(\"Hello, World!\");\n     // existing code\n }";
-        let prompt = GeminiService::create_commit_prompt(diff);
-        assert!(prompt.contains("Git diff:"));
-        assert!(prompt.contains(diff));
-        assert!(prompt.contains("conventional commit format"));
+    fn test_system_instruction() {
+        let instruction = GeminiService::get_system_instruction();
+        assert!(instruction.contains("conventional commit format"));
+        assert!(instruction.contains("feat: ✨"));
+        assert!(instruction.contains("Commit Types and Emojis"));
     }
 }
